@@ -18,6 +18,7 @@ package com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.d
 import android.content.Context
 import androidx.annotation.MainThread
 import androidx.lifecycle.LiveData
+import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.MyCallback
 import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.data.db.MyLocationDatabase
 import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.data.db.MyLocationEntity
 import java.util.UUID
@@ -86,7 +87,7 @@ class LocationRepository private constructor(
     /**
      * Subscribes to location updates.
      */
-    fun startLocationUpdates() = myLocationManager.startLocationUpdates()
+    fun startLocationUpdates(myCallback : MyCallback) = myLocationManager.startLocationUpdates(myCallback = myCallback)
 
     /**
      * Un-subscribes from location updates.

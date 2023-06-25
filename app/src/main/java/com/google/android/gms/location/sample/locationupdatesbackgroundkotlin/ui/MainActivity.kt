@@ -15,14 +15,20 @@
  */
 package com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.ui
 
+import android.Manifest
+import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil.setContentView
+import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.AlarmReceiver
 import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.R
 import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.databinding.ActivityMainBinding
 
@@ -54,6 +60,7 @@ class MainActivity : AppCompatActivity(), PermissionRequestFragment.Callbacks
 //    LocationUpdateFragment.Callbacks
 {
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -70,6 +77,15 @@ class MainActivity : AppCompatActivity(), PermissionRequestFragment.Callbacks
 //                .replace(R.id.fragment_container, fragment)
 //                .commit()
 //        }
+        if (this.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) !=
+            PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                AlarmReceiver.LOCATION_PERMISSION_REQUEST_CODE
+            )
+        }
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val intent = Intent()

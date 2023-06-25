@@ -19,13 +19,17 @@ import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Looper
 import android.util.Log
 import androidx.annotation.MainThread
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
+import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.AlarmUtils
 import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.LocationUpdatesBroadcastReceiver
+import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.MyCallback
 import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.hasPermission
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -94,28 +98,37 @@ class MyLocationManager private constructor(private val context: Context) {
      *
      */
     @Throws(SecurityException::class)
-    fun startLocationUpdates() {
+    fun startLocationUpdates(myCallback : MyCallback) {
         Log.d(TAG, "startLocationUpdates()")
 
-        if (!context.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)) return
+        if (!context.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            Log.d(MyLocationManager::class.java.simpleName,"Location Permission Not Granted")
+            return
+        }
 
         try {
+            Log.d(TAG, "startLocationUpdates(2)")
             _receivingLocationUpdates.value = true
             // If the PendingIntent is the same as the last request (which it always is), this
             // request will replace any requestLocationUpdates() called before.
-
+            Log.d(TAG, "startLocationUpdates(3)")
             var mLocationCallback = object :
                 LocationCallback() {
 
+                @RequiresApi(Build.VERSION_CODES.KITKAT)
                 override fun onLocationResult(p0: LocationResult) {
                     super.onLocationResult(p0)
+                    Log.d(TAG, "startLocationUpdates(7)")
                     var date=Date()
                     var sdf=SimpleDateFormat("dd:MM:yyyy hh:mm:ss aa");
 
+
                     if (p0.lastLocation != null) {
                         Log.d(MyLocationManager::class.java.simpleName,"${p0.lastLocation.latitude}-${p0.lastLocation.longitude} date->${sdf.format(date)}")
+                        myCallback.onSuccess()
                     }else{
                         Log.d(MyLocationManager::class.java.simpleName,"")
+                        myCallback.onFailure()
                     }
                 }
 
@@ -123,11 +136,12 @@ class MyLocationManager private constructor(private val context: Context) {
                     super.onLocationAvailability(p0)
                 }
             }
-
+            Log.d(TAG, "startLocationUpdates(4)")
             fusedLocationClient.requestLocationUpdates(locationRequest,mLocationCallback, Looper.myLooper()!!)
+            Log.d(TAG, "startLocationUpdates(5)")
         } catch (permissionRevoked: SecurityException) {
             _receivingLocationUpdates.value = false
-
+            Log.d(TAG, "startLocationUpdates(6)")
             // Exception only occurs if the user revokes the FINE location permission before
             // requestLocationUpdates() is finished executing (very rare).
             Log.d(TAG, "Location permission revoked; details: $permissionRevoked")

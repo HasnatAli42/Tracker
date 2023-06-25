@@ -17,6 +17,7 @@ package com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.v
 
 import android.app.Application
 import androidx.lifecycle.LiveData
+import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.MyCallback
 import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.data.LocationRepository
 import java.util.concurrent.Executors
 
@@ -35,7 +36,7 @@ class LocationUpdateViewModel(application: Application){
 
     val locationListLiveData = locationRepository.getLocations()
 
-    fun startLocationUpdates() = locationRepository.startLocationUpdates()
+    fun startLocationUpdates(myCallback : MyCallback) = locationRepository.startLocationUpdates(myCallback = myCallback)
 
     fun stopLocationUpdates() = locationRepository.stopLocationUpdates()
 }
