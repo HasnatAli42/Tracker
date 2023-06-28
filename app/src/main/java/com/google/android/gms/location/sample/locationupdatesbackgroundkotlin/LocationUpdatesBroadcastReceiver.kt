@@ -46,6 +46,7 @@ class LocationUpdatesBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(TAG, "onReceive() context:$context, intent:$intent")
+        Log.d(LocationUpdatesBroadcastReceiver::class.simpleName,"location in begin")
 
         if (intent.action == ACTION_PROCESS_UPDATES) {
 
@@ -66,6 +67,7 @@ class LocationUpdatesBroadcastReceiver : BroadcastReceiver() {
                     )
                 }
                 if (locations.isNotEmpty()) {
+                    Log.d(LocationUpdatesBroadcastReceiver::class.simpleName,"location is not empty")
                     LocationRepository.getInstance(context, Executors.newSingleThreadExecutor())
                         .addLocations(locations)
                 }

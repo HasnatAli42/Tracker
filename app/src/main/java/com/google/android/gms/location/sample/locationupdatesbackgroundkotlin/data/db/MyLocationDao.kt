@@ -31,6 +31,8 @@ interface MyLocationDao {
     @Query("SELECT * FROM my_location_table ORDER BY date DESC")
     fun getLocations(): LiveData<List<MyLocationEntity>>
 
+
+
     @Query("SELECT * FROM my_location_table WHERE id=(:id)")
     fun getLocation(id: UUID): LiveData<MyLocationEntity>
 

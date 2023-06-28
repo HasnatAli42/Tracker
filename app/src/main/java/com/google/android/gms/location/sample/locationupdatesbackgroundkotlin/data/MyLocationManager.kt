@@ -19,21 +19,22 @@ import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.location.Location
+import android.location.LocationManager
 import android.os.Build
 import android.os.Looper
 import android.util.Log
-import androidx.annotation.MainThread
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.*
-import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.AlarmUtils
-import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.LocationUpdatesBroadcastReceiver
-import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.MyCallback
-import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.hasPermission
+import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.*
+import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.data.db.MyLocationEntity
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.concurrent.TimeUnit
+import java.util.*
+import java.util.concurrent.Executors
+
 
 private const val TAG = "MyLocationManager"
 
@@ -42,7 +43,15 @@ private const val TAG = "MyLocationManager"
  */
 class MyLocationManager private constructor(private val context: Context) {
 
-    private val _receivingLocationUpdates: MutableLiveData<Boolean> = MutableLiveData<Boolean>(false)
+    private val _receivingLocationUpdates: MutableLiveData<Boolean> =
+        MutableLiveData<Boolean>(false)
+
+    private lateinit var locationManager: LocationManager
+
+//    private val locationRepository = LocationRepository.getInstance(
+//        context,
+//        Executors.newSingleThreadExecutor()
+//    )
 
     /**
      * Status of location updates, i.e., whether the app is actively subscribed to location changes.
@@ -64,17 +73,10 @@ class MyLocationManager private constructor(private val context: Context) {
         // IMPORTANT NOTE: Apps running on "O" devices (regardless of targetSdkVersion) may
         // receive updates less frequently than this interval when the app is no longer in the
         // foreground.
-        interval = TimeUnit.SECONDS.toMillis(6)
-
-        // Sets the fastest rate for active location updates. This interval is exact, and your
-        // application will never receive updates faster than this value.
-        fastestInterval = 100
-
-        // Sets the maximum time when batched location updates are delivered. Updates may be
-        // delivered sooner than this interval.
-        maxWaitTime = TimeUnit.MINUTES.toMillis(2)
-
+        interval = 100
+        fastestInterval = 50
         priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        maxWaitTime = 100
     }
 
     /**
@@ -98,11 +100,11 @@ class MyLocationManager private constructor(private val context: Context) {
      *
      */
     @Throws(SecurityException::class)
-    fun startLocationUpdates(myCallback : MyCallback) {
+    fun startLocationUpdates(myCallback: MyCallback) {
         Log.d(TAG, "startLocationUpdates()")
 
         if (!context.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
-            Log.d(MyLocationManager::class.java.simpleName,"Location Permission Not Granted")
+            Log.d(MyLocationManager::class.java.simpleName, "Location Permission Not Granted")
             return
         }
 
@@ -112,33 +114,164 @@ class MyLocationManager private constructor(private val context: Context) {
             // If the PendingIntent is the same as the last request (which it always is), this
             // request will replace any requestLocationUpdates() called before.
             Log.d(TAG, "startLocationUpdates(3)")
-            var mLocationCallback = object :
-                LocationCallback() {
 
-                @RequiresApi(Build.VERSION_CODES.KITKAT)
-                override fun onLocationResult(p0: LocationResult) {
-                    super.onLocationResult(p0)
-                    Log.d(TAG, "startLocationUpdates(7)")
-                    var date=Date()
-                    var sdf=SimpleDateFormat("dd:MM:yyyy hh:mm:ss aa");
+//-----------process 4
+            locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+//            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100, 5f, object:android.location.LocationListener{
+//                override fun onLocationChanged(p0: Location) {
+//                    if (p0 == null) {
+//                        myCallback.onFailure()
+//                        Toast.makeText(
+//                            Tracker.tracker!!,
+//                            "Cannot get location.",
+//                            Toast.LENGTH_SHORT
+//                        ).show()
+//                    }
+//                    else {
+//                        Log.d(TAG, "startLocationUpdates(7)")
+//                        var date = Date()
+//                        var sdf = SimpleDateFormat("dd:MM:yyyy hh:mm:ss aa");
+//                        val lat = p0.latitude
+//                        val lon = p0.longitude
+//
+//                        Log.d(
+//                            MyLocationManager::class.java.simpleName,
+//                            "${lat}-${lon} date->${
+//                                sdf.format(date)
+//                            }"
+//                        )
+//
+////                        var entity=MyLocationEntity().also {
+////                            it.latitude=p0.latitude
+////                            it.longitude=p0.longitude
+////                            it.date=date
+////                        }
+////                        locationRepository.addLocation(entity)
+//                        myCallback.onSuccess()
+//                    }
+//
+//
+//                }
+//
+//            })
+//-----------process 3
+
+//            LocationServices.getFusedLocationProviderClient(context).lastLocation.addOnSuccessListener {location->
+//                     if (location == null) {
+//                        myCallback.onFailure()
+//                        Toast.makeText(
+//                            Tracker.tracker!!,
+//                            "Cannot get location.",
+//                            Toast.LENGTH_SHORT
+//                        ).show()
+//                    }
+//                    else {
+//                        Log.d(TAG, "startLocationUpdates(7)")
+//                        var date = Date()
+//                        var sdf = SimpleDateFormat("dd:MM:yyyy hh:mm:ss aa");
+//                        val lat = location.latitude
+//                        val lon = location.longitude
+//
+//                        Log.d(
+//                            MyLocationManager::class.java.simpleName,
+//                            "${lat}-${lon} date->${
+//                                sdf.format(date)
+//                            }"
+//                        )
+//                        myCallback.onSuccess()
+//                    }
+//            }
 
 
-                    if (p0.lastLocation != null) {
-                        Log.d(MyLocationManager::class.java.simpleName,"${p0.lastLocation.latitude}-${p0.lastLocation.longitude} date->${sdf.format(date)}")
-                        myCallback.onSuccess()
-                    }else{
-                        Log.d(MyLocationManager::class.java.simpleName,"")
-                        myCallback.onFailure()
-                    }
-                }
+//-----------process 2
 
-                override fun onLocationAvailability(p0: LocationAvailability) {
-                    super.onLocationAvailability(p0)
-                }
-            }
-            Log.d(TAG, "startLocationUpdates(4)")
-            fusedLocationClient.requestLocationUpdates(locationRequest,mLocationCallback, Looper.myLooper()!!)
+
+//            fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_LOW_POWER, object : CancellationToken() {
+//                override fun onCanceledRequested(p0: OnTokenCanceledListener) = CancellationTokenSource().token
+//
+//                override fun isCancellationRequested() = false
+//            })
+//                .addOnSuccessListener { location: Location? ->
+//                    if (location == null) {
+//                        myCallback.onFailure()
+//                        Toast.makeText(
+//                            Tracker.tracker!!,
+//                            "Cannot get location.",
+//                            Toast.LENGTH_SHORT
+//                        ).show()
+//                    }
+//                    else {
+//                        Log.d(TAG, "startLocationUpdates(7)")
+//                        var date = Date()
+//                        var sdf = SimpleDateFormat("dd:MM:yyyy hh:mm:ss aa");
+//                        val lat = location.latitude
+//                        val lon = location.longitude
+//
+//                        Log.d(
+//                            MyLocationManager::class.java.simpleName,
+//                            "${lat}-${lon} date->${
+//                                sdf.format(date)
+//                            }"
+//                        )
+//                        myCallback.onSuccess()
+//                    }
+//
+//                     }
+
+
+//----------------------process 1
+      //  }
+//            var mLocationCallback = object :
+//                LocationCallback() {
+//
+//                @RequiresApi(Build.VERSION_CODES.KITKAT)
+//                override fun onLocationResult(p0: LocationResult) {
+//                    super.onLocationResult(p0)
+//                    _receivingLocationUpdates.value = false
+//
+//                    Log.d(TAG, "startLocationUpdates(7)")
+//                    var date = Date()
+//                    var sdf = SimpleDateFormat("dd:MM:yyyy hh:mm:ss aa");
+//
+//
+//                    if (p0.lastLocation != null) {
+//                        Log.d(
+//                            MyLocationManager::class.java.simpleName,
+//                            "${p0.lastLocation.latitude}-${p0.lastLocation.longitude} date->${
+//                                sdf.format(date)
+//                            }"
+//                        )
+//
+//                        var location=MyLocationEntity().also {
+//                            it.latitude=p0.lastLocation.latitude
+//                            it.longitude=p0.lastLocation.longitude
+//                            it.date=date
+//                        }
+//
+//                        LocationRepository.getInstance(context, Executors.newSingleThreadExecutor())
+//                            .addLocation(location)
+//
+//                        stopLocationUpdates()
+//                        myCallback.onSuccess()
+//                    } else {
+//                        Log.d(MyLocationManager::class.java.simpleName, "")
+//                        myCallback.onFailure()
+//                    }
+//                }
+//
+//                override fun onLocationAvailability(p0: LocationAvailability) {
+//                    super.onLocationAvailability(p0)
+//                }
+//            }
+//            Log.d(TAG, "startLocationUpdates(4)")
+//            fusedLocationClient.requestLocationUpdates(
+//                locationRequest,
+//                mLocationCallback,
+//                Looper.myLooper()!!
+//            )
             Log.d(TAG, "startLocationUpdates(5)")
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationUpdatePendingIntent)
         } catch (permissionRevoked: SecurityException) {
             _receivingLocationUpdates.value = false
             Log.d(TAG, "startLocationUpdates(6)")
@@ -149,7 +282,6 @@ class MyLocationManager private constructor(private val context: Context) {
         }
     }
 
-    @MainThread
     fun stopLocationUpdates() {
         Log.d(TAG, "stopLocationUpdates()")
         _receivingLocationUpdates.value = false
@@ -157,7 +289,8 @@ class MyLocationManager private constructor(private val context: Context) {
     }
 
     companion object {
-        @Volatile private var INSTANCE: MyLocationManager? = null
+        @Volatile
+        private var INSTANCE: MyLocationManager? = null
 
         fun getInstance(context: Context): MyLocationManager {
             return INSTANCE ?: synchronized(this) {

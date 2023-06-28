@@ -24,13 +24,17 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+import android.util.Log
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil.setContentView
 import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.AlarmReceiver
 import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.R
+import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.Tracker
 import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.databinding.ActivityMainBinding
+import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.viewmodels.LocationUpdateViewModel
 
 
 /**
@@ -56,8 +60,7 @@ import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.da
  * Best practices require you to spread out your first fine/course request and your background
  * request.
  */
-class MainActivity : AppCompatActivity(), PermissionRequestFragment.Callbacks
-//    LocationUpdateFragment.Callbacks
+class MainActivity : AppCompatActivity()
 {
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -65,18 +68,9 @@ class MainActivity : AppCompatActivity(), PermissionRequestFragment.Callbacks
         super.onCreate(savedInstanceState)
 
         setContentView<ActivityMainBinding>(this, R.layout.activity_main)
-//
-//        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
-//
-//        if (currentFragment == null) {
-//
-//            val fragment = LocationUpdateFragment.newInstance()
-//
-//            supportFragmentManager
-//                .beginTransaction()
-//                .replace(R.id.fragment_container, fragment)
-//                .commit()
-//        }
+
+
+
         if (this.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) !=
             PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(
@@ -97,43 +91,29 @@ class MainActivity : AppCompatActivity(), PermissionRequestFragment.Callbacks
                 startActivity(intent)
             }
         }
+
+
+        if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            Log.d(MainActivity::class.simpleName,"BG Permission Required")
+        }else{
+            Log.d(MainActivity::class.simpleName,"BG Permission Already")
+        }
+
+        val locationUpdateViewModel = LocationUpdateViewModel(Tracker.tracker!!);
+
+        locationUpdateViewModel.locationListLiveData.observeForever {
+
+            if(it.size>0) {
+                Log.d(
+                    MainActivity::class.simpleName,
+                    "data size-> ${it.size}\n Lat=${it.first().latitude} Long=${it.first().longitude}"
+                )
+
+                findViewById<TextView>(R.id.records_count).text =
+                    "Recorded Point-> ${it.size} \n Lat=${it.first().latitude} Long=${it.first().longitude}"
+            }
+        }
+
     }
 
-    // Triggered from the permission Fragment that it's the app has permissions to display the
-    // location fragment.
-    override fun displayLocationUI() {
-
-//        val fragment = LocationUpdateFragment.newInstance()
-//
-//        supportFragmentManager
-//            .beginTransaction()
-//            .replace(R.id.fragment_container, fragment)
-//            .commit()
-    }
-
-    // Triggers a splash screen (fragment) to help users decide if they want to approve the missing
-    // fine location permission.
-//    override fun requestFineLocationPermission() {
-//        val fragment = PermissionRequestFragment.newInstance(PermissionRequestType.FINE_LOCATION)
-//
-//        supportFragmentManager
-//            .beginTransaction()
-//            .replace(R.id.fragment_container, fragment)
-//            .addToBackStack(null)
-//            .commit()
-//    }
-//
-//    // Triggers a splash screen (fragment) to help users decide if they want to approve the missing
-//    // background location permission.
-//    override fun requestBackgroundLocationPermission() {
-//        val fragment = PermissionRequestFragment.newInstance(
-//            PermissionRequestType.BACKGROUND_LOCATION
-//        )
-//
-//        supportFragmentManager
-//            .beginTransaction()
-//            .replace(R.id.fragment_container, fragment)
-//            .addToBackStack(null)
-//            .commit()
-//    }
 }

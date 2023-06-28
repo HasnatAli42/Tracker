@@ -28,10 +28,10 @@ import java.util.UUID
 @Entity(tableName = "my_location_table")
 data class MyLocationEntity(
     @PrimaryKey val id: UUID = UUID.randomUUID(),
-    val latitude: Double = 0.0,
-    val longitude: Double = 0.0,
-    val foreground: Boolean = true,
-    val date: Date = Date()
+    var latitude: Double = 0.0,
+    var longitude: Double = 0.0,
+    var foreground: Boolean = true,
+    var date: Date = Date()
 ) {
 
     override fun toString(): String {

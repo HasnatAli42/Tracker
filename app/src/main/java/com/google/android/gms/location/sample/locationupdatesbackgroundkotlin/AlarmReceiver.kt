@@ -1,29 +1,23 @@
 package com.google.android.gms.location.sample.locationupdatesbackgroundkotlin
 
-import android.Manifest
+import android.R
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.app.Application
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
-import android.location.LocationRequest
+import android.graphics.Color
 import android.os.Build
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
 import androidx.multidex.MultiDexApplication
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.data.MyLocationManager
 import com.google.android.gms.location.sample.locationupdatesbackgroundkotlin.viewmodels.LocationUpdateViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 class AlarmReceiver : BroadcastReceiver() {
 
@@ -39,7 +33,7 @@ class AlarmReceiver : BroadcastReceiver() {
         val sdf= SimpleDateFormat("dd:MM:yyyy hh:mm:ss aa");
         Log.d("AlarmReceiver","Alarm Received date->${sdf.format(date)}")
 
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        //val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         // Check if location permission is granted
 //        if (context.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) ==
@@ -58,23 +52,42 @@ class AlarmReceiver : BroadcastReceiver() {
 //            Log.d(MyLocationManager::class.java.simpleName,"Location Permission Not Granted")
 //        }
 
-        val locationUpdateViewModel = LocationUpdateViewModel(application);
-        locationUpdateViewModel.startLocationUpdates(object : MyCallback {
-            override fun onSuccess() {
-                val delayMillis : Long = 2000
-                AlarmUtils.setAlarm(context, delayMillis)
-                Log.d("AlarmReceiver","Alarm Set Success date->${sdf.format(date)}")
-            }
+        notificationDialog()
 
-            override fun onFailure() {
-                val delayMillis : Long = 2000
-                AlarmUtils.setAlarm(context, delayMillis)
-                Log.d("AlarmReceiver","Alarm Set Failure date->${sdf.format(date)}")
-            }
-        })
-//        val delayMillis : Long = 2000
-//        AlarmUtils.setAlarm(context, delayMillis)
+        val delayMillis : Long = 2000
+        AlarmUtils.setAlarm(context, delayMillis)
 //        Log.d("AlarmReceiver","Alarm Set date->${sdf.format(date)}")
+    }
+
+    private fun notificationDialog() {
+        val notificationManager =
+            Tracker.tracker?. getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val NOTIFICATION_CHANNEL_ID = "tutorialspoint_01"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            @SuppressLint("WrongConstant") val notificationChannel = NotificationChannel(
+                NOTIFICATION_CHANNEL_ID,
+                "My Notifications",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            // Configure the notification channel.
+            notificationChannel.description = "Sample Channel description"
+            notificationChannel.enableLights(true)
+            notificationChannel.lightColor = Color.RED
+            notificationChannel.vibrationPattern = longArrayOf(0, 1000, 500, 1000)
+            notificationChannel.enableVibration(false)
+            notificationManager!!.createNotificationChannel(notificationChannel)
+        }
+        val notificationBuilder: NotificationCompat.Builder = NotificationCompat.Builder(Tracker?.tracker!!, NOTIFICATION_CHANNEL_ID)
+        notificationBuilder.setAutoCancel(true)
+            .setDefaults(Notification.DEFAULT_ALL)
+            .setWhen(System.currentTimeMillis())
+            .setSmallIcon(R.mipmap.sym_def_app_icon)
+            .setTicker("Tutorialspoint") //.setPriority(Notification.PRIORITY_MAX)
+            .setContentTitle("sample notification")
+            .setContentText("This is sample notification")
+            .setContentInfo("Information")
+        notificationManager!!.notify(1, notificationBuilder.build())
     }
 
 }

@@ -62,6 +62,8 @@
             </intent-filter>
         </receiver>
 
+        <service android:name=".LocationService" android:foregroundServiceType="location"></service>
+
     </application>
 
 </manifest>
